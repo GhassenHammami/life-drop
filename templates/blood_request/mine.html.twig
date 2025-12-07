@@ -1,0 +1,140 @@
+{# templates/blood_request/mine.html.twig #}
+{% extends 'base.html.twig' %}
+{% block title %}
+    My requests — LifeDrop
+{% endblock %}
+{% block body %}
+    <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">
+                    My requests
+                </h1>
+                <p class="mt-3 text-slate-300/90">
+                    Requests you posted. Manage status, edit details, and review offers.
+                </p>
+            </div>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <a href="{{ path('app_blood_request_index') }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                    Browse all
+                </a>
+                <a href="{{ path('app_blood_request_new') }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
+                        hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                    Create request
+                </a>
+            </div>
+        </div>
+        {% for message in app.flashes('success') %}
+            <div class="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                {{ message }}
+            </div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                {{ message }}
+            </div>
+        {% endfor %}
+        <div class="mt-8">
+            {% if requests|length == 0 %}
+                <div class="rounded-3xl bg-white/5 p-8 text-center ring-1 ring-white/10">
+                    <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-600/15 text-rose-200 ring-1 ring-rose-400/20">
+                        🩸
+                    </div>
+                    <h2 class="mt-4 text-xl font-semibold">
+                        No requests yet
+                    </h2>
+                    <p class="mt-2 text-sm text-slate-300/90">
+                        Create your first request to get help fast.
+                    </p>
+                    <div class="mt-6">
+                        <a href="{{ path('app_blood_request_new') }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
+                            hover:bg-rose-500 shadow-lg shadow-rose-600/25">
+                            Create a request
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {% for req in requests %}
+                        {% set u = (req.urgency ?? '')|upper %}
+                        {% set s = (req.status ?? '')|upper %}
+                        {% set topDate = req.updatedAt ? req.updatedAt : req.createdAt %}
+                        {% set dateLabel = req.updatedAt ? 'Updated' : 'Posted' %}
+                        <a href="{{ path('app_blood_request_show', {id: req.id}) }}" class="group block rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10 hover:ring-white/20">
+                            <div class="rounded-3xl bg-slate-950/60 p-5 backdrop-blur">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div class="text-xs text-slate-300/80">
+                                            Blood type
+                                        </div>
+                                        <div class="mt-1 text-2xl font-bold tracking-tight text-slate-100">
+                                            {{ req.bloodType }}
+                                        </div>
+                                    </div>
+                                    {% set uBadge =
+                    u == 'HIGH'
+                      ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
+                      : (u == 'MEDIUM'
+                        ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
+                        : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                      ) %}
+                                    <div class="rounded-2xl px-3 py-2 text-xs font-semibold ring-1 {{ uBadge }}">
+                                        {{ u ?: '—' }}
+                                    </div>
+                                </div>
+                                <div class="mt-4 space-y-2 text-sm text-slate-300/90">
+                                    <div>
+                                        <span class="text-slate-400">
+                                            Hospital:
+                                        </span>
+                                        <span class="text-slate-200">
+                                            {{ req.hospitalName }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="text-slate-400">
+                                                City:
+                                            </span>
+                                            <span class="text-slate-200">
+                                                {{ req.city }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400">
+                                                Units:
+                                            </span>
+                                            <span class="text-slate-200 font-semibold">
+                                                {{ req.unitsNeeded }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-5 flex items-center justify-between gap-3">
+                                    <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-400/80"></span>
+                                        {{ s ?: 'OPEN' }}
+                                    </div>
+                                    <div class="text-xs text-slate-400">
+                                        {{ dateLabel }}
+                                        :
+                                        {{ topDate ? topDate|date('Y-m-d H:i') : '—' }}
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between gap-3">
+                                    <div class="text-xs text-slate-400 group-hover:text-slate-300">
+                                        View details →
+                                    </div>
+                                    <span class="inline-flex items-center justify-center rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 ring-1 ring-white/10 group-hover:bg-white/10">
+                                        Manage
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

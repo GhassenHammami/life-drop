@@ -11,201 +11,474 @@
     {% set req = blood_request %}
     {% set u = (req.urgency ?? '')|upper %}
     {% set s = (req.status ?? '')|upper %}
-    {% set isOwner = app.user and req.createdBy and app.user.id == req.createdBy.id %}
+    {% set isClosed = (s == 'CLOSED') %}
+
+    {# Owner / permissions #}
+    {% set isOwner = app.user and req.createdBy and (app.user == req.createdBy) %}
+    {% set isAdmin = is_granted('ROLE_ADMIN') %}
+    {% set canManage = isOwner or isAdmin %}
+
     {% set requesterName =
         (req.createdBy and req.createdBy.userProfile and req.createdBy.userProfile.fullName)
-        ? req.createdBy.userProfile.fullName
-        : (req.createdBy ? req.createdBy.userIdentifier : 'Unknown') %}
+            ? req.createdBy.userProfile.fullName
+            : (req.createdBy ? req.createdBy.userIdentifier : 'Unknown') %}
+
     {% set topDate = req.updatedAt ? req.updatedAt : req.createdAt %}
     {% set dateLabel = req.updatedAt ? 'Updated' : 'Posted' %}
+
+    {# Robust urgency badge mapping #}
+    {% if u in ['HIGH', 'MEDIUM', 'LOW'] %}
+        {% set uBadge =
+            u == 'HIGH'
+                ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
+                : (u == 'MEDIUM'
+                    ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
+                    : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                ) %}
+    {% else %}
+        {% set uBadge = 'bg-slate-500/15 text-slate-200 ring-white/10' %}
+    {% endif %}
+
+    {# Status display fallback #}
+    {% set statusText = s ? (s|replace({'_':' '})) : 'OPEN' %}
 
     <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
         <div class="mx-auto max-w-4xl">
 
-            {# Header (same vibe as your list page header) #}
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h1 class="mt-4 text-4xl font-bold tracking-tight">
-                        {{ req.bloodType }}
+            {# Header #}
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0 flex-1">
+                    <h1 class="mt-4 text-4xl font-bold tracking-tight truncate">
+                        {{ req.bloodType ?? '—' }}
                         needed
                         <span class="text-slate-300/70 text-base font-semibold">
                             •
                         </span>
                         <span class="text-slate-200">
-                            {{ req.city }}
+                            {{ req.city ?? '—' }}
                         </span>
                     </h1>
-                    <p class="mt-3 text-slate-300/90">
+
+                    <p class="mt-3 text-slate-300/90 truncate">
                         <span class="font-semibold text-slate-100">
-                            {{ req.hospitalName }}
+                            {{ req.hospitalName ?? '—' }}
                         </span>
                         <span class="text-slate-300/70">
                             •
                         </span>
-                        Requested by
-                        <span class="font-semibold text-slate-100">
-                            {{ requesterName }}
+                        <span class="text-slate-200">
+                            {{ req.city ?? '—' }}
                         </span>
                     </p>
                 </div>
 
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <a href="{{ path('app_blood_request_index') }}" class="inline-flex w-fit items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <a href="{{ path('app_blood_request_index') }}" class="inline-flex whitespace-nowrap items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
                         Back to requests
                     </a>
 
-                    {% if isOwner %}
-                        <a href="{{ path('app_blood_request_edit', {id: req.id}) }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
+                    {% if canManage and not isClosed %}
+                        <a href="{{ path('app_blood_request_edit', {id: req.id}) }}" class="inline-flex whitespace-nowrap items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
                                 hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
                             focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
                             Edit
                         </a>
 
-                        <form method="post" action="{{ path('app_blood_request_delete', {id: req.id}) }}" onsubmit="return confirm('Delete this request? This cannot be undone.');">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ req.id) }}">
-                                <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-rose-200
-                                        ring-1 ring-rose-400/25 hover:bg-rose-600/10 hover:ring-rose-400/40 active:scale-[0.99]
-                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
-                                    Delete
+                        <form method="post" action="{{ path('app_blood_request_close', {id: req.id}) }}" onsubmit="return confirm('Close this request? No more offers/actions will be possible.');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('close' ~ req.id) }}">
+                                <button type="submit" class="inline-flex whitespace-nowrap cursor-pointer items-center justify-center rounded-2xl bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-200
+                                        ring-1 ring-emerald-400/20 hover:bg-emerald-500/25 hover:ring-emerald-300/40 active:scale-[0.99]
+                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60">
+                                    Close request
                                 </button>
                             </form>
-                        {% endif %}
-                    </div>
-                </div>
 
-                {% for message in app.flashes('success') %}
-                    <div class="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-
-                {% for message in app.flashes('error') %}
-                    <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-                
-                {# Main card (same “p-1 ring + inner glass” style as your other pages) #}
-                <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
-                    <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
-
-                        {# Top strip: blood type + urgency badge, and status + date chip (your request) #}
-                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div class="flex items-start gap-4">
-                                <div>
-                                    <div class="text-xs text-slate-300/80">
-                                        Blood type
-                                    </div>
-                                    <div class="mt-1 text-3xl font-bold tracking-tight text-slate-100">
-                                        {{ req.bloodType }}
-                                    </div>
-                                </div>
-
-                                {% set uBadge =
-                                u == 'HIGH'
-                                    ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
-                                    : (u == 'MEDIUM'
-                                        ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
-                                        : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
-                                    ) %}
-                                <div class="mt-1 rounded-2xl px-3 py-2 text-xs font-semibold ring-1 {{ uBadge }}">
-                                    {{ u ? u : '—' }}
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                {# Status chip #}
-                                <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-rose-400/80"></span>
-                                    {{ s ? s|replace({'_':' '}) : 'OPEN' }}
-                                </div>
-
-                                {# Date next to status #}
-                                <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
-                                    <span class="text-slate-400">
-                                        {{ dateLabel }}
-                                        :
-                                    </span>
-                                    {{ topDate ? topDate|date('Y-m-d H:i') : '—' }}
-                                </div>
-                            </div>
+                            <form method="post" action="{{ path('app_blood_request_delete', {id: req.id}) }}" onsubmit="return confirm('Delete this request? This cannot be undone.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ req.id) }}">
+                                    <button type="submit" class="inline-flex whitespace-nowrap cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-rose-200
+                                            ring-1 ring-rose-400/25 hover:bg-rose-600/10 hover:ring-rose-400/40 active:scale-[0.99]
+                                        focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                        Delete
+                                    </button>
+                                </form>
+                            {% endif %}
                         </div>
+                    </div>
 
-                        {# Info grid #}
-                        <div class="mt-6 grid gap-6 md:grid-cols-3">
-                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-                                <div class="text-xs font-semibold text-slate-300/80">
-                                    Hospital
-                                </div>
-                                <div class="mt-2 text-lg font-semibold text-slate-100">
-                                    {{ req.hospitalName }}
-                                </div>
-                                <div class="mt-1 text-sm text-slate-300/90">
-                                    {{ req.city }}
-                                </div>
-                            </div>
-
-                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-                                <div class="text-xs font-semibold text-slate-300/80">
-                                    Units needed
-                                </div>
-                                <div class="mt-2 text-2xl font-bold tracking-tight text-slate-100">
-                                    {{ req.unitsNeeded }}
-                                </div>
-                            </div>
-
-                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-                                <div class="text-xs font-semibold text-slate-300/80">
-                                    Contact phone
-                                </div>
-                                <div class="mt-2 text-lg font-semibold text-slate-100">
-                                    {{ req.contactPhone }}
-                                </div>
-                                <div class="mt-1 text-xs text-slate-400">
-                                    Use respectfully (urgent coordination only).
-                                </div>
-                            </div>
+                    {# Flash messages #}
+                    {% for message in app.flashes('success') %}
+                        <div class="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                            {{ message }}
                         </div>
+                    {% endfor %}
 
-                        {% if req.description %}
-                            <div class="mt-6 rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
-                                <div class="text-xs font-semibold text-slate-300/80">
-                                    Details
+                    {% for message in app.flashes('error') %}
+                        <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+
+                    {# Main card #}
+                    <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+                        <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
+
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="flex items-start gap-4">
+                                    <div>
+                                        <div class="text-xs text-slate-300/80">
+                                            Blood type
+                                        </div>
+                                        <div class="mt-1 text-3xl font-bold tracking-tight text-slate-100">
+                                            {{ req.bloodType ?? '—' }}
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-1 rounded-2xl px-3 py-2 text-xs font-semibold ring-1 {{ uBadge }}">
+                                        {{ u ? u : '—' }}
+                                    </div>
                                 </div>
-                                <div class="mt-2 text-sm text-slate-200/90 whitespace-pre-line">
-                                    {{ req.description }}
+
+                                <div class="flex items-center gap-3">
+                                    <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-400/80"></span>
+                                        {{ statusText }}
+                                    </div>
+
+                                    <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+                                        <span class="text-slate-400">
+                                            {{ dateLabel }}
+                                            :
+                                        </span>
+                                        {{ topDate ? topDate|date('Y-m-d H:i') : '—' }}
+                                    </div>
                                 </div>
                             </div>
-                        {% endif %}
 
-                        <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="text-xs text-slate-400">
-                                Tip: If you’re a donor, you’ll be able to send an offer with a message.
+                            {# Requested by moved inside the card #}
+                            <div class="mt-4 text-sm text-slate-300/90">
+                                Requested by
+                                <span class="font-semibold text-slate-100">
+                                    {{ requesterName }}
+                                </span>
                             </div>
 
-                            {% if not isOwner %}
-                                <div class="flex flex-col gap-3 sm:flex-row">
-                                    {% if app.user %}
-                                        <a href="#" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
-                                                hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
-                                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
-                                            Offer to donate
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ path('app_login') }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100
-                                            ring-1 ring-white/10 hover:bg-white/10">
-                                            Log in to offer help
-                                        </a>
-                                    {% endif %}
+                            <div class="mt-6 grid gap-6 md:grid-cols-3">
+                                <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                    <div class="text-xs font-semibold text-slate-300/80">
+                                        Hospital
+                                    </div>
+                                    <div class="mt-2 text-lg font-semibold text-slate-100">
+                                        {{ req.hospitalName ?? '—' }}
+                                    </div>
+                                    <div class="mt-1 text-sm text-slate-300/90">
+                                        {{ req.city ?? '—' }}
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                    <div class="text-xs font-semibold text-slate-300/80">
+                                        Units needed
+                                    </div>
+                                    <div class="mt-2 text-2xl font-bold tracking-tight text-slate-100">
+                                        {{ req.unitsNeeded ?? '—' }}
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                    <div class="text-xs font-semibold text-slate-300/80">
+                                        Contact phone
+                                    </div>
+                                    <div class="mt-2 text-lg font-semibold text-slate-100">
+                                        {{ req.contactPhone ?? '—' }}
+                                    </div>
+
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        {% if req.contactPhone %}
+                                            {% set phoneHref = req.contactPhone|replace({' ': '', '-': '', '(': '', ')': ''}) %}
+                                            <a href="tel:{{ phoneHref }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                                                Call
+                                            </a>
+                                        {% endif %}
+                                        <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10" onclick="navigator.clipboard?.writeText(window.location.href)">
+                                            Copy link
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-2 text-xs text-slate-400">
+                                        Use respectfully (urgent coordination only).
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if req.description %}
+                                <div class="mt-6 rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                    <div class="text-xs font-semibold text-slate-300/80">
+                                        Details
+                                    </div>
+                                    <div class="mt-2 text-sm text-slate-200/90 whitespace-pre-line">
+                                        {{ req.description }}
+                                    </div>
                                 </div>
                             {% endif %}
 
+                            <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="text-xs text-slate-400">
+                                    Tip: If you’re a donor, you’ll be able to send an offer with a message.
+                                </div>
+
+                                {% if not isOwner and not isClosed %}
+                                    <div class="flex flex-col gap-3 sm:flex-row">
+                                        {% if app.user %}
+                                            <a href="{{ path('app_donation_offer_new', {id: req.id}) }}" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
+                                                    hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                                                focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                                Offer to donate
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ path('app_login') }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                                                Log in to offer help
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {# OFFERS SECTION #}
+                    {% set offers = req.donationOffers ?? [] %}
+
+                    <div class="mt-8">
+                        <div class="flex items-end justify-between gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold tracking-tight">
+                                    Donation offers
+                                </h2>
+                                <p class="mt-2 text-sm text-slate-300/90">
+                                    {% if canManage %}
+                                        Review donor messages and coordinate quickly.
+                                    {% else %}
+                                        Offers made by donors for this request.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="text-xs text-slate-400">
+                                {{ offers|length }}
+                                offer
+                                {{ offers|length == 1 ? '' : 's' }}
+                            </div>
                         </div>
 
-                    </div>
-                </div>
+                        {% if offers|length == 0 %}
+                            <div class="mt-6 rounded-3xl bg-white/5 p-8 text-center ring-1 ring-white/10">
+                                <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-600/15 text-rose-200 ring-1 ring-rose-400/20">
+                                    ✉️
+                                </div>
+                                <h3 class="mt-4 text-lg font-semibold">
+                                    No offers yet
+                                </h3>
+                                <p class="mt-2 text-sm text-slate-300/90">
+                                    Check back soon, or share the request to reach more donors.
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="mt-6 grid gap-4">
+                                {% for offer in offers|sort((a,b) => (b.createdAt ? b.createdAt.timestamp : 0) <=> (a.createdAt ? a.createdAt.timestamp : 0)) %}
+                                    {% set offerStatus = (offer.status ?? 'PENDING')|upper %}
 
-            </div>
-        </div>
-    {% endblock %}
-    
+                                    {% if offerStatus in ['ACCEPTED','REJECTED','PENDING'] %}
+                                        {% set badgeClass =
+                                    offerStatus == 'ACCEPTED'
+                                        ? 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                                        : (offerStatus == 'REJECTED'
+                                            ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
+                                            : 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
+                                        ) %}
+
+                                        {% set cardTint =
+                                    offerStatus == 'ACCEPTED'
+                                        ? 'from-emerald-500/12 to-white/5 ring-emerald-400/20'
+                                        : (offerStatus == 'REJECTED'
+                                            ? 'from-rose-600/12 to-white/5 ring-rose-400/20'
+                                            : 'from-amber-500/12 to-white/5 ring-amber-400/20'
+                                        ) %}
+                                    {% else %}
+                                        {% set badgeClass = 'bg-slate-500/15 text-slate-200 ring-white/10' %}
+                                        {% set cardTint = 'from-white/8 to-white/5 ring-white/10' %}
+                                    {% endif %}
+
+                                    {% set donorName =
+                                (offer.donor and offer.donor.userProfile and offer.donor.userProfile.fullName)
+                                    ? offer.donor.userProfile.fullName
+                                    : (offer.donor ? offer.donor.userIdentifier : 'Unknown') %}
+
+                                    {# Privacy: only requester(owner/admin) + donor + admin can see donor name/message/phone #}
+                                    {% set isRequester = canManage %}
+                                    {% set isDonor = app.user and offer.donor and (app.user == offer.donor) %}
+                                    {% set canSeePrivate = isRequester or isDonor or isAdmin %}
+
+                                    {% set donorPhone =
+                                (offer.donor and offer.donor.userProfile and offer.donor.userProfile.phone)
+                                    ? offer.donor.userProfile.phone
+                                    : null %}
+
+                                    <div class="rounded-3xl bg-linear-to-b {{ cardTint }} p-1 ring-1">
+                                        <div class="rounded-3xl bg-slate-950/60 p-5 backdrop-blur md:p-6">
+
+                                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <div class="text-xs text-slate-300/80">
+                                                        Donor
+                                                    </div>
+                                                    <div class="mt-1 text-lg font-semibold text-slate-100">
+                                                        {% if canSeePrivate %}
+                                                            {{ donorName }}
+                                                        {% else %}
+                                                            <span class="select-none blur-sm opacity-70">
+                                                                Hidden donor
+                                                            </span>
+                                                            <span class="ml-2 inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[11px] font-semibold text-slate-300 ring-1 ring-white/10">
+                                                                Private
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="mt-1 text-xs text-slate-400">
+                                                        {{ offer.createdAt ? offer.createdAt|date('Y-m-d H:i') : '—' }}
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                                    <div class="inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold ring-1 {{ badgeClass }}">
+                                                        {{ offerStatus }}
+                                                    </div>
+
+                                                    {% if donorPhone %}
+                                                        {% if canSeePrivate %}
+                                                            {% set phoneHref = donorPhone|replace({' ': '', '-': '', '(': '', ')': ''}) %}
+                                                            <a href="tel:{{ phoneHref }}" class="inline-flex cursor-pointer items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-white/10">
+                                                                <span class="text-slate-400">
+                                                                    ☎
+                                                                </span>
+                                                                {{ donorPhone }}
+                                                            </a>
+
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+
+                                            </div>
+
+                                            {# MESSAGE (view vs edit) #}
+                                            {% if offer.message %}
+                                                <div class="mt-4 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <div class="text-xs font-semibold text-slate-300/80">
+                                                            Message
+                                                        </div>
+
+                                                        {% if isDonor and not isClosed and offerStatus == 'PENDING' %}
+                                                            <button type="button" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10" onclick="
+                                                                    document.getElementById('offer-msg-view-{{ offer.id }}')?.classList.add('hidden');
+                                                                    document.getElementById('offer-msg-edit-{{ offer.id }}')?.classList.remove('hidden');
+                                                                ">
+                                                                Edit
+                                                            </button>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <div id="offer-msg-view-{{ offer.id }}">
+                                                        {% if canSeePrivate %}
+                                                            <div class="mt-2 text-sm text-slate-200/90 whitespace-pre-line">
+                                                                {{ offer.message }}
+                                                            </div>
+                                                        {% else %}
+                                                            <div class="mt-2 relative">
+                                                                <div class="text-sm text-slate-200/90 whitespace-pre-line blur-sm opacity-70 select-none">
+                                                                    {{ offer.message }}
+                                                                </div>
+                                                                <div class="pointer-events-none absolute inset-0 rounded-xl bg-slate-950/20"></div>
+                                                            </div>
+                                                            <div class="mt-2 text-xs text-slate-400">
+                                                                Message visible to the requester and the donor.
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    {% if isDonor and not isClosed and offerStatus == 'PENDING' %}
+                                                        <div id="offer-msg-edit-{{ offer.id }}" class="hidden mt-3">
+                                                            <form method="post" action="{{ path('app_donation_offer_update_message', {id: offer.id}) }}">
+                                                                <input type="hidden" name="_token" value="{{ csrf_token('offer_update_message' ~ offer.id) }}">
+
+                                                                    <textarea name="message" rows="4" class="w-full rounded-2xl bg-slate-950/50 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                                                        {{ offer.message|trim }}
+                                                                    </textarea>
+
+                                                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                                                        <button type="button" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10" onclick="
+                                                                                document.getElementById('offer-msg-edit-{{ offer.id }}')?.classList.add('hidden');
+                                                                                document.getElementById('offer-msg-view-{{ offer.id }}')?.classList.remove('hidden');
+                                                                            ">
+                                                                            Cancel
+                                                                        </button>
+
+                                                                        <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
+                                                                                hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                                                                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                                                            Save
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+
+                                                {# DONOR: Withdraw only if offer is pending and request not closed #}
+                                                {% if isDonor and not isClosed and offerStatus == 'PENDING' %}
+                                                    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                                                        <form method="post" action="{{ path('app_donation_offer_withdraw', {id: offer.id}) }}" onsubmit="return confirm('Withdraw this offer?');">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('offer_withdraw' ~ offer.id) }}">
+                                                                <button type="submit" class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100
+                                                                        ring-1 ring-white/10 hover:bg-white/10 active:scale-[0.99]
+                                                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200/60">
+                                                                    Withdraw offer
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    {# Owner/admin actions (only when pending, and request not closed) #}
+                                                    {% if canManage and offerStatus == 'PENDING' and not isClosed %}
+                                                        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                                                            <form method="post" action="{{ path('app_donation_offer_reject', {id: offer.id}) }}">
+                                                                <input type="hidden" name="_token" value="{{ csrf_token('offer_reject' ~ offer.id) }}">
+                                                                    <button type="submit" class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-rose-200
+                                                                            ring-1 ring-rose-400/25 hover:bg-rose-600/10 hover:ring-rose-400/40 active:scale-[0.99]
+                                                                        focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                                                        Reject
+                                                                    </button>
+                                                                </form>
+
+                                                                <form method="post" action="{{ path('app_donation_offer_accept', {id: offer.id}) }}">
+                                                                    <input type="hidden" name="_token" value="{{ csrf_token('offer_accept' ~ offer.id) }}">
+                                                                        <button type="submit" class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-200
+                                                                                ring-1 ring-emerald-400/20 hover:bg-emerald-500/25 hover:ring-emerald-300/40 active:scale-[0.99]
+                                                                            focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60">
+                                                                            Accept
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            {% endif %}
+
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                </div>
+                            </div>
+                        {% endblock %}
+                        

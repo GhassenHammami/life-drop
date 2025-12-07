@@ -73,7 +73,7 @@
                     </div>
 
                     {# Blood Type #}
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-2">
                         <label for="bloodType" class="mb-2 block text-sm font-medium text-slate-200/90">
                             Blood type
                         </label>
@@ -92,7 +92,7 @@
                     </div>
 
                     {# Urgency #}
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-2">
                         <label for="urgency" class="mb-2 block text-sm font-medium text-slate-200/90">
                             Urgency
                         </label>
@@ -108,6 +108,26 @@
                                 </option>
                             {% endfor %}
 
+                        </select>
+                    </div>
+
+                    {# Status #}
+                    <div class="md:col-span-2">
+                        <label for="status" class="mb-2 block text-sm font-medium text-slate-200/90">
+                            Status
+                        </label>
+                        {% set selectedStatus = app.request.query.get('status')|default('OPEN') %}
+                        <select id="status" name="status" class="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            <option value="" {{ selectedStatus is empty ? 'selected' : '' }}>
+                                Open + Closed
+                            </option>
+                            <option value="OPEN" {{ selectedStatus == 'OPEN' ? 'selected' : '' }}>
+                                Open only
+                            </option>
+                            <option value="CLOSED" {{ selectedStatus == 'CLOSED' ? 'selected' : '' }}>
+                                Closed only
+                            </option>
                         </select>
                     </div>
 

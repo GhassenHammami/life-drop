@@ -18,7 +18,12 @@ final class BloodRequestController extends AbstractController
     #[Route(name: 'app_blood_request_index', methods: ['GET'])]
     public function index(Request $request, BloodRequestRepository $repo): Response
     {
-        $criteria = ['status' => 'OPEN'];
+        $criteria = [];
+
+        $status = strtoupper((string) $request->query->get('status', 'OPEN'));
+        if (in_array($status, ['OPEN', 'CLOSED'], true)) {
+            $criteria['status'] = $status;
+        }
 
         if ($city = $request->query->get('city')) {
             $criteria['city'] = $city;
@@ -64,23 +69,56 @@ final class BloodRequestController extends AbstractController
         ]);
     }
 
+    #[Route('/mine', name: 'app_blood_request_mine', methods: ['GET'])]
+    public function mine(BloodRequestRepository $repo): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        $requests = $repo->findBy(
+            ['createdBy' => $user],
+            ['createdAt' => 'DESC']
+        );
+
+        return $this->render('blood_request/mine.html.twig', [
+            'requests' => $requests,
+        ]);
+    }
 
     #[Route('/{id}', name: 'app_blood_request_show', methods: ['GET'])]
-    public function show(BloodRequest $bloodRequest): Response
+    public function show(int $id, BloodRequestRepository $repo): Response
     {
+        $bloodRequest = $repo->find($id);
+
+        if (!$bloodRequest) {
+            $this->addFlash('error', 'Blood request not found.');
+            return $this->redirectToRoute('app_blood_request_index');
+        }
+
         return $this->render('blood_request/show.html.twig', [
             'blood_request' => $bloodRequest,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_blood_request_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, BloodRequest $bloodRequest, EntityManagerInterface $entityManager): Response
+    public function edit(int $id, Request $request, BloodRequestRepository $repo, EntityManagerInterface $entityManager): Response
     {
-
         $this->denyAccessUnlessGranted('ROLE_USER');
 
+        $bloodRequest = $repo->find($id);
+        if (!$bloodRequest) {
+            $this->addFlash('error', 'Blood request not found.');
+            return $this->redirectToRoute('app_blood_request_index');
+        }
+
         if ($bloodRequest->getCreatedBy() !== $this->getUser()) {
-            throw $this->createAccessDeniedException();
+            $this->addFlash('error', 'You are not allowed to edit this request.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
+        }
+
+        if (($bloodRequest->getStatus() ?? '') === 'CLOSED') {
+            $this->addFlash('error', 'This request is closed and cannot be edited.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
         }
 
         $form = $this->createForm(BloodRequestType::class, $bloodRequest);
@@ -102,24 +140,77 @@ final class BloodRequestController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_blood_request_delete', methods: ['POST'])]
-    public function delete(Request $request, BloodRequest $bloodRequest, EntityManagerInterface $entityManager): Response
+    public function delete(int $id, Request $request, BloodRequestRepository $repo, EntityManagerInterface $entityManager): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
-        if ($bloodRequest->getCreatedBy() !== $this->getUser()) {
-            throw $this->createAccessDeniedException();
+        $bloodRequest = $repo->find($id);
+        if (!$bloodRequest) {
+            $this->addFlash('error', 'Blood request not found.');
+            return $this->redirectToRoute('app_blood_request_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        if ($this->isCsrfTokenValid('delete' . $bloodRequest->getId(), $request->getPayload()->getString('_token'))) {
+        if ($bloodRequest->getCreatedBy() !== $this->getUser()) {
+            $this->addFlash('error', 'You are not allowed to delete this request.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()], Response::HTTP_SEE_OTHER);
+        }
+
+        if (($bloodRequest->getStatus() ?? '') === 'CLOSED') {
+            $this->addFlash('error', 'This request is closed and cannot be deleted.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()], Response::HTTP_SEE_OTHER);
+        }
+
+        // Use request->request for standard form POST
+        if ($this->isCsrfTokenValid('delete' . $bloodRequest->getId(), (string) $request->request->get('_token'))) {
             $entityManager->remove($bloodRequest);
             $entityManager->flush();
-
             $this->addFlash('success', 'Blood request deleted successfully.');
         } else {
             $this->addFlash('error', 'Invalid CSRF token. Please try again.');
         }
 
         return $this->redirectToRoute('app_blood_request_index', [], Response::HTTP_SEE_OTHER);
-
     }
+
+    #[Route('/blood-request/{id}/close', name: 'app_blood_request_close', methods: ['POST'])]
+    public function close(int $id, Request $request, BloodRequestRepository $repo, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+
+        $bloodRequest = $repo->find($id);
+        if (!$bloodRequest) {
+            $this->addFlash('error', 'Blood request not found.');
+            return $this->redirectToRoute('app_blood_request_index');
+        }
+
+        if ($bloodRequest->getCreatedBy() !== $this->getUser()) {
+            $this->addFlash('error', 'You are not allowed to close this request.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
+        }
+
+        if (!$this->isCsrfTokenValid('close' . $bloodRequest->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
+        }
+
+        if (($bloodRequest->getStatus() ?? '') === 'CLOSED') {
+            $this->addFlash('error', 'This request is already closed.');
+            return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
+        }
+
+        $bloodRequest->setStatus('CLOSED');
+        $bloodRequest->setUpdatedAt(new \DateTimeImmutable());
+
+        foreach ($bloodRequest->getDonationOffers() as $offer) {
+            if (($offer->getStatus() ?? '') === 'PENDING') {
+                $offer->setStatus('EXPIRED');
+            }
+        }
+
+        $em->flush();
+
+        $this->addFlash('success', 'Request closed.');
+        return $this->redirectToRoute('app_blood_request_show', ['id' => $bloodRequest->getId()]);
+    }
+
 }

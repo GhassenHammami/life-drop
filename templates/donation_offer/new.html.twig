@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Offer to donate — LifeDrop
+{% endblock %}
+
+{% block body %}
+    {% set req = blood_request %}
+    {% set u = (req.urgency ?? '')|upper %}
+    <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+        <div class="mx-auto max-w-4xl">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold tracking-tight">
+                        Offer to donate
+                    </h1>
+                    <p class="mt-3 text-slate-300/90">
+                        You’re offering help for request #
+                        {{ req.id }}
+                        (
+                        {{ req.city }}
+                        •
+                        {{ req.bloodType }}
+                        ).
+                    </p>
+                </div>
+
+                <a href="{{ path('app_blood_request_show', {id: req.id}) }}" class="inline-flex w-fit items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                    Back to request
+                </a>
+            </div>
+
+            {% if form_errors(form) %}
+                <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+                <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
+                    <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="text-sm text-slate-300/90">
+                                <div class="font-semibold text-slate-100">
+                                    {{ req.hospitalName }}
+                                </div>
+
+                                <div class="mt-1">
+                                    <span class="text-slate-400">
+                                        City:
+                                    </span>
+                                    {{ req.city }}
+                                    •
+                                    <span class="text-slate-400">
+                                        Units:
+                                    </span>
+                                    {{ req.unitsNeeded }}
+                                </div>
+
+                                <div class="mt-1">
+                                    <span class="text-slate-400">
+                                        Donating to:
+                                    </span>
+                                    {% set requesterProfile = req.createdBy ? req.createdBy.userProfile : null %}
+                                    <span class="text-slate-200">
+                                        {{ requesterProfile and requesterProfile.fullName ? requesterProfile.fullName : (req.createdBy ? req.createdBy.userIdentifier : '—') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl px-3 py-2 text-xs font-semibold ring-1
+                                {{ u == 'HIGH' ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20' : (u == 'MEDIUM' ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20' : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20') }}">
+                                {{ u }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{ form_start(form, { attr: { class: 'mt-6 space-y-4' } }) }}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                            Message
+                        </label>
+                        {{ form_widget(form.message, {
+              attr: {
+                class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+              }
+            }) }}
+                        <div class="mt-2 text-xs text-rose-200/90">
+                            {{ form_errors(form.message) }}
+                        </div>
+                        <div class="mt-2 text-xs text-slate-400">
+                            Example: “I’m available today after 6pm. I’m near
+                            {{ req.city }}
+                            .”
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                        <a href="{{ path('app_blood_request_show', {id: req.id}) }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                            Cancel
+                        </a>
+
+                        <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            Send offer
+                        </button>
+                    </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
