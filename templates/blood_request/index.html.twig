@@ -1,0 +1,252 @@
+{# templates/blood_request/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Urgent requests — LifeDrop
+{% endblock %}
+
+{% block body %}
+    <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+
+        {# Header #}
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">
+                    Urgent blood requests
+                </h1>
+                <p class="mt-3 text-slate-300/90">
+                    Browse open requests near you. You can filter by city and blood type.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                {% if app.user %}
+                    <a href="{{ path('app_blood_request_new') }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
+                            hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                        Create a request
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100
+                        ring-1 ring-white/10 hover:bg-white/10">
+                        Log in to create a request
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {# flashes #}
+        {% for message in app.flashes('success') %}
+            <div class="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {# Filters (GET form) #}
+        <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+            <div class="rounded-3xl bg-slate-950/60 p-5 backdrop-blur md:p-6">
+                <form method="get" class="grid gap-4 md:grid-cols-12 md:items-end">
+                    {# City #}
+                    <div class="md:col-span-4">
+                        <label for="city" class="mb-2 block text-sm font-medium text-slate-200/90">
+                            City
+                        </label>
+                        <select id="city" name="city" class="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            <option value="">
+                                All cities
+                            </option>
+                            {# If you already have a fixed list, paste it here. Otherwise keep it simple for now. #}
+                            {% set selectedCity = app.request.query.get('city') %}
+                            {% for c in cities %}
+                                <option value="{{ c }}" {{ selectedCity == c ? 'selected' : '' }}>
+                                    {{ c }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Blood Type #}
+                    <div class="md:col-span-3">
+                        <label for="bloodType" class="mb-2 block text-sm font-medium text-slate-200/90">
+                            Blood type
+                        </label>
+                        {% set selectedBlood = app.request.query.get('bloodType') %}
+                        <select id="bloodType" name="bloodType" class="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            <option value="">
+                                Any
+                            </option>
+                            {% for bt in blood_types %}
+                                <option value="{{ bt }}" {{ selectedBlood == bt ? 'selected' : '' }}>
+                                    {{ bt }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Urgency #}
+                    <div class="md:col-span-3">
+                        <label for="urgency" class="mb-2 block text-sm font-medium text-slate-200/90">
+                            Urgency
+                        </label>
+                        {% set selectedUrgency = app.request.query.get('urgency') %}
+                        <select id="urgency" name="urgency" class="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            <option value="">
+                                Any
+                            </option>
+                            {% for u in urgencies %}
+                                <option value="{{ u }}" {{ selectedUrgency == u ? 'selected' : '' }}>
+                                    {{ u|lower|capitalize }}
+                                </option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+
+                    {# Actions #}
+                    <div class="md:col-span-2 flex gap-2">
+                        <button type="submit" class="w-full cursor-pointer rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-slate-100
+                                ring-1 ring-white/10 hover:bg-white/15 active:scale-[0.99]
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
+                            Apply
+                        </button>
+
+                        <a href="{{ path('app_blood_request_index') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100
+                            ring-1 ring-white/10 hover:bg-white/10">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+
+                <div class="mt-3 text-xs text-slate-400">
+                    Tip: Open requests are shown here. Once a request is fulfilled, it should be closed.
+                </div>
+            </div>
+        </div>
+
+        {# List #}
+        <div class="mt-8">
+            {% if blood_requests is defined %}
+                {% set requests = blood_requests %}
+            {% else %}
+                {# Maker CRUD uses "blood_requests" by default. If your variable name differs, adjust. #}
+                {% set requests = bloodRequests|default([]) %}
+            {% endif %}
+
+            {% if requests|length == 0 %}
+                <div class="rounded-3xl bg-white/5 p-8 text-center ring-1 ring-white/10">
+                    <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-600/15 text-rose-200 ring-1 ring-rose-400/20">
+                        🩸
+                    </div>
+                    <h2 class="mt-4 text-xl font-semibold">
+                        No open requests found
+                    </h2>
+                    <p class="mt-2 text-sm text-slate-300/90">
+                        Try changing the filters, or come back later.
+                    </p>
+                    {% if app.user %}
+                        <div class="mt-6">
+                            <a href="{{ path('app_blood_request_new') }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
+                                hover:bg-rose-500 shadow-lg shadow-rose-600/25">
+                                Create the first request
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {% for req in requests %}
+                        <a href="{{ path('app_blood_request_show', {id: req.id}) }}" class="group block rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10 hover:ring-white/20">
+                            <div class="rounded-3xl bg-slate-950/60 p-5 backdrop-blur flex flex-col h-full justify-around">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div class="text-xs text-slate-300/80">
+                                            Blood type
+                                        </div>
+                                        <div class="mt-1 text-2xl font-bold tracking-tight text-slate-100">
+                                            {{ req.bloodType }}
+                                        </div>
+                                    </div>
+
+                                    {# Urgency badge #}
+                                    {% set u = (req.urgency ?? '')|upper %}
+                                    <div class="
+                                            rounded-2xl px-3 py-2 text-xs font-semibold ring-1
+                                            {{ u == 'HIGH'
+                                            ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
+                                            : (u == 'MEDIUM'
+                                            ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
+                                            : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                                        ) }}">
+                                        {{ u ? u : '—' }}
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 space-y-2 text-sm text-slate-300/90">
+                                    <div>
+                                        <span class="text-slate-400">
+                                            Hospital:
+                                        </span>
+                                        <span class="text-slate-200">
+                                            {{ req.hospitalName }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="text-slate-400">
+                                                City:
+                                            </span>
+                                            <span class="text-slate-200">
+                                                {{ req.city }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span class="text-slate-400">
+                                                Units:
+                                            </span>
+                                            <span class="text-slate-200 font-semibold">
+                                                {{ req.unitsNeeded }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if req.description %}
+                                    <div class="mt-4 line-clamp-2 text-sm text-slate-300/90">
+                                        {{ req.description }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="mt-5 flex items-center justify-between gap-3">
+                                    {# Status chip #}
+                                    {% set s = (req.status ?? '')|upper %}
+                                    <div class="
+                                            inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1
+                                            {{ s == 'OPEN'
+                                            ? 'bg-white/5 text-slate-200 ring-white/10'
+                                        : 'bg-white/5 text-slate-200 ring-white/10' }}">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-400/80"></span>
+                                        {{ s ? s|replace({'_':' '}) : '—' }}
+                                    </div>
+
+                                    <div class="text-xs text-slate-400 group-hover:text-slate-300">
+                                        View details →
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+{% endblock %}

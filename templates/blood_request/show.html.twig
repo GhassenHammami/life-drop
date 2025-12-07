@@ -1,0 +1,211 @@
+{# templates/blood_request/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Request #
+    {{ blood_request.id }}
+    — LifeDrop
+{% endblock %}
+
+{% block body %}
+    {% set req = blood_request %}
+    {% set u = (req.urgency ?? '')|upper %}
+    {% set s = (req.status ?? '')|upper %}
+    {% set isOwner = app.user and req.createdBy and app.user.id == req.createdBy.id %}
+    {% set requesterName =
+        (req.createdBy and req.createdBy.userProfile and req.createdBy.userProfile.fullName)
+        ? req.createdBy.userProfile.fullName
+        : (req.createdBy ? req.createdBy.userIdentifier : 'Unknown') %}
+    {% set topDate = req.updatedAt ? req.updatedAt : req.createdAt %}
+    {% set dateLabel = req.updatedAt ? 'Updated' : 'Posted' %}
+
+    <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+        <div class="mx-auto max-w-4xl">
+
+            {# Header (same vibe as your list page header) #}
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h1 class="mt-4 text-4xl font-bold tracking-tight">
+                        {{ req.bloodType }}
+                        needed
+                        <span class="text-slate-300/70 text-base font-semibold">
+                            •
+                        </span>
+                        <span class="text-slate-200">
+                            {{ req.city }}
+                        </span>
+                    </h1>
+                    <p class="mt-3 text-slate-300/90">
+                        <span class="font-semibold text-slate-100">
+                            {{ req.hospitalName }}
+                        </span>
+                        <span class="text-slate-300/70">
+                            •
+                        </span>
+                        Requested by
+                        <span class="font-semibold text-slate-100">
+                            {{ requesterName }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <a href="{{ path('app_blood_request_index') }}" class="inline-flex w-fit items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                        Back to requests
+                    </a>
+
+                    {% if isOwner %}
+                        <a href="{{ path('app_blood_request_edit', {id: req.id}) }}" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white
+                                hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            Edit
+                        </a>
+
+                        <form method="post" action="{{ path('app_blood_request_delete', {id: req.id}) }}" onsubmit="return confirm('Delete this request? This cannot be undone.');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ req.id) }}">
+                                <button type="submit" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-rose-200
+                                        ring-1 ring-rose-400/25 hover:bg-rose-600/10 hover:ring-rose-400/40 active:scale-[0.99]
+                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                    Delete
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% for message in app.flashes('success') %}
+                    <div class="mt-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+
+                {% for message in app.flashes('error') %}
+                    <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                
+                {# Main card (same “p-1 ring + inner glass” style as your other pages) #}
+                <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+                    <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
+
+                        {# Top strip: blood type + urgency badge, and status + date chip (your request) #}
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="flex items-start gap-4">
+                                <div>
+                                    <div class="text-xs text-slate-300/80">
+                                        Blood type
+                                    </div>
+                                    <div class="mt-1 text-3xl font-bold tracking-tight text-slate-100">
+                                        {{ req.bloodType }}
+                                    </div>
+                                </div>
+
+                                {% set uBadge =
+                                u == 'HIGH'
+                                    ? 'bg-rose-600/15 text-rose-200 ring-rose-400/20'
+                                    : (u == 'MEDIUM'
+                                        ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20'
+                                        : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20'
+                                    ) %}
+                                <div class="mt-1 rounded-2xl px-3 py-2 text-xs font-semibold ring-1 {{ uBadge }}">
+                                    {{ u ? u : '—' }}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                {# Status chip #}
+                                <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-rose-400/80"></span>
+                                    {{ s ? s|replace({'_':' '}) : 'OPEN' }}
+                                </div>
+
+                                {# Date next to status #}
+                                <div class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+                                    <span class="text-slate-400">
+                                        {{ dateLabel }}
+                                        :
+                                    </span>
+                                    {{ topDate ? topDate|date('Y-m-d H:i') : '—' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Info grid #}
+                        <div class="mt-6 grid gap-6 md:grid-cols-3">
+                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                <div class="text-xs font-semibold text-slate-300/80">
+                                    Hospital
+                                </div>
+                                <div class="mt-2 text-lg font-semibold text-slate-100">
+                                    {{ req.hospitalName }}
+                                </div>
+                                <div class="mt-1 text-sm text-slate-300/90">
+                                    {{ req.city }}
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                <div class="text-xs font-semibold text-slate-300/80">
+                                    Units needed
+                                </div>
+                                <div class="mt-2 text-2xl font-bold tracking-tight text-slate-100">
+                                    {{ req.unitsNeeded }}
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                <div class="text-xs font-semibold text-slate-300/80">
+                                    Contact phone
+                                </div>
+                                <div class="mt-2 text-lg font-semibold text-slate-100">
+                                    {{ req.contactPhone }}
+                                </div>
+                                <div class="mt-1 text-xs text-slate-400">
+                                    Use respectfully (urgent coordination only).
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if req.description %}
+                            <div class="mt-6 rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+                                <div class="text-xs font-semibold text-slate-300/80">
+                                    Details
+                                </div>
+                                <div class="mt-2 text-sm text-slate-200/90 whitespace-pre-line">
+                                    {{ req.description }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="text-xs text-slate-400">
+                                Tip: If you’re a donor, you’ll be able to send an offer with a message.
+                            </div>
+
+                            {% if not isOwner %}
+                                <div class="flex flex-col gap-3 sm:flex-row">
+                                    {% if app.user %}
+                                        <a href="#" class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
+                                                hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                            Offer to donate
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ path('app_login') }}" class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100
+                                            ring-1 ring-white/10 hover:bg-white/10">
+                                            Log in to offer help
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    {% endblock %}
+    

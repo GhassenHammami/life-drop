@@ -44,6 +44,7 @@ class BloodRequest
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'bloodRequests')]
+    #[ORM\JoinColumn(nullable: false)]
     private ?User $createdBy = null;
 
     /**
@@ -52,9 +53,14 @@ class BloodRequest
     #[ORM\OneToMany(targetEntity: DonationOffer::class, mappedBy: 'request', orphanRemoval: true)]
     private Collection $donationOffers;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
     public function __construct()
     {
         $this->donationOffers = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->status = 'OPEN';
     }
 
     public function getId(): ?int
@@ -208,6 +214,18 @@ class BloodRequest
                 $donationOffer->setRequest(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

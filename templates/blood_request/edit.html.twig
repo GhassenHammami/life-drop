@@ -1,0 +1,245 @@
+{# templates/blood_request/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Create request — LifeDrop
+{% endblock %}
+
+{% block body %}
+    <div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+        <div class="mx-auto max-w-4xl">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold tracking-tight">
+                        Create a blood request
+                    </h1>
+                    <p class="mt-3 text-slate-300/90">
+                        Fill in the details below. Keep contact info accurate so donors can reach you fast.
+                    </p>
+                </div>
+
+                <a href="{{ path('app_blood_request_index') }}"
+                   class="inline-flex w-fit items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                    Back to requests
+                </a>
+            </div>
+
+            {% if form_errors(form) %}
+                <div class="mt-6 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            <div class="mt-8 rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+                <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
+
+                    {{ form_start(form, { attr: { class: 'space-y-6' } }) }}
+
+                    <div class="grid gap-5 md:grid-cols-2">
+                        {# Blood type #}
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.bloodType) }}
+                            </label>
+                            {{ form_widget(form.bloodType, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.bloodType) }}
+                            </div>
+                        </div>
+
+                        {# Urgency #}
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.urgency) }}
+                            </label>
+                            {{ form_widget(form.urgency, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.urgency) }}
+                            </div>
+                        </div>
+
+                        {# City #}
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.city) }}
+                            </label>
+                            {{ form_widget(form.city, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.city) }}
+                            </div>
+                        </div>
+
+                        {# Hospital (filtered by city using JS) #}
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.hospitalName) }}
+                            </label>
+                            {{ form_widget(form.hospitalName, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.hospitalName) }}
+                            </div>
+                            <div id="hospitalHelp" class="mt-2 text-xs text-slate-400">
+                                Pick a city first, then choose a hospital from the list.
+                            </div>
+                        </div>
+
+                        {# Units needed #}
+                        <div class="md:col-span-2">
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.unitsNeeded) }}
+                            </label>
+                            {{ form_widget(form.unitsNeeded, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60',
+                                    min: 1
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.unitsNeeded) }}
+                            </div>
+                        </div>
+
+                        {# Contact phone #}
+                        <div class="md:col-span-2">
+                            <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                                {{ form_label(form.contactPhone) }}
+                            </label>
+                            {{ form_widget(form.contactPhone, {
+                                attr: {
+                                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60',
+                                    placeholder: '+216 .. .. .. ..'
+                                }
+                            }) }}
+                            <div class="mt-2 text-xs text-rose-200/90">
+                                {{ form_errors(form.contactPhone) }}
+                            </div>
+                            <div class="mt-2 text-xs text-slate-400">
+                                This number will be used to coordinate the donation.
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Description #}
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                            {{ form_label(form.description) }}
+                        </label>
+                        {{ form_widget(form.description, {
+                            attr: {
+                                class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60',
+                                rows: 4,
+                                placeholder: 'Optional: any details that help donors (e.g., time window, department, extra notes)'
+                            }
+                        }) }}
+                        <div class="mt-2 text-xs text-rose-200/90">
+                            {{ form_errors(form.description) }}
+                        </div>
+                    </div>
+
+                    {# Actions #}
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                        <a href="{{ path('app_blood_request_index') }}"
+                           class="inline-flex items-center justify-center rounded-2xl bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+                            Cancel
+                        </a>
+
+                        <button type="submit"
+                                class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                            Publish request
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+
+                    <script>
+                      (function () {
+                        const hospitalsByCity = {{ hospitalsByCity|json_encode|raw }};
+                        const cityId = {{ form.city.vars.id|json_encode|raw }};
+                        const hospitalId = {{ form.hospitalName.vars.id|json_encode|raw }};
+                        const previousHospital = {{ (form.hospitalName.vars.value ?? '')|json_encode|raw }};
+                        const helpEl = document.getElementById('hospitalHelp');
+
+                        function populateHospitals() {
+                          const cityEl = document.getElementById(cityId);
+                          const hospitalEl = document.getElementById(hospitalId);
+                          if (!cityEl || !hospitalEl) return;
+
+                          const city = cityEl.value;
+                          const hospitals = hospitalsByCity[city] || [];
+
+                          while (hospitalEl.firstChild) hospitalEl.removeChild(hospitalEl.firstChild);
+
+                          const placeholder = document.createElement('option');
+                          placeholder.value = '';
+
+                          if (!city) {
+                            placeholder.textContent = 'Select a city first';
+                          } else if (hospitals.length === 0) {
+                            placeholder.textContent = 'No hospitals listed for this city (choose another city)';
+                          } else {
+                            placeholder.textContent = 'Select hospital';
+                          }
+
+                          hospitalEl.appendChild(placeholder);
+
+                          if (!city || hospitals.length === 0) {
+                            hospitalEl.value = '';
+                            hospitalEl.disabled = true;
+                            if (helpEl) helpEl.textContent = city ? 'No hospitals for this city yet. Try another one.' : 'Pick a city first, then choose a hospital from the list.';
+                            return;
+                          }
+
+                          hospitals.forEach((h) => {
+                            const opt = document.createElement('option');
+                            opt.value = h;
+                            opt.textContent = h;
+                            hospitalEl.appendChild(opt);
+                          });
+
+                          hospitalEl.disabled = false;
+
+                          if (previousHospital && hospitals.includes(previousHospital)) {
+                            hospitalEl.value = previousHospital;
+                          } else {
+                            hospitalEl.value = '';
+                          }
+
+                          if (helpEl) helpEl.textContent = 'Hospitals are filtered by the selected city.';
+                        }
+
+                        function init() {
+                          const cityEl = document.getElementById(cityId);
+                          if (!cityEl) return;
+                          populateHospitals();
+                          cityEl.addEventListener('change', populateHospitals);
+                        }
+
+                        document.addEventListener('DOMContentLoaded', init);
+                        document.addEventListener('turbo:load', init);
+                      })();
+                    </script>
+                </div>
+            </div>
+
+            <div class="mx-auto mt-6 max-w-4xl text-xs text-slate-400">
+                Safety reminder: LifeDrop helps people connect. Always follow hospital guidance and donation eligibility rules.
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -14,7 +14,7 @@ class DonationOffer
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
 
     #[ORM\Column(length: 15)]
@@ -30,6 +30,12 @@ class DonationOffer
     #[ORM\ManyToOne(inversedBy: 'donationOffers')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $donor = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->status = 'PENDING';
+    }
 
     public function getId(): ?int
     {
