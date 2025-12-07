@@ -165,8 +165,12 @@ LifeDrop helps people publish urgent blood donation requests and enables nearby 
    ```bash
    php bin/console doctrine:fixtures:load
    ```
+3. Useful: default admin account created by fixtures
+   Use these credentials to log in after loading fixtures:
+   - Email: admin@demo.tn
+   - Password: admin123
 
-3. Inspect routes (helpful to learn available endpoints)
+4. Inspect routes (helpful to learn available endpoints)
    ```bash
    php bin/console debug:router
    ```
