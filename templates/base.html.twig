@@ -25,9 +25,11 @@
         {% endblock %}
     </head>
 
-    <body class="min-h-screen text-slate-100 antialiased bg-slate-950">
+    {# data-auth is a cheap, reliable flag you can target with CSS even if markup gets cached weirdly #}
+    <body data-auth="{{ app.user ? '1' : '0' }}" class="min-h-screen text-slate-100 antialiased bg-slate-950">
         <div class="min-h-screen">
-            <div class="relative overflow-hidden min-h-screen bg-slate-950">
+            {# Allow dropdowns to escape vertically while still preventing horizontal glow overflow #}
+            <div class="relative overflow-x-hidden overflow-y-visible min-h-screen bg-slate-950">
                 {# Background glow #}
                 <div class="pointer-events-none absolute inset-0">
                     <div class="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-rose-600/25 blur-3xl"></div>
@@ -35,8 +37,8 @@
                 </div>
 
                 <div class="relative z-10 flex min-h-screen flex-col">
-                    {# Header: glassy (so it matches your cards) #}
-                    <header class="border-b border-white/10 bg-slate-950/35 backdrop-blur">
+                    {# Header #}
+                    <header class="relative z-50 border-b border-white/10 bg-slate-950/35 backdrop-blur">
                         <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                             <a href="{{ path('app_home') }}" class="group flex items-center gap-3">
                                 <div class="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15 overflow-hidden">
@@ -52,6 +54,7 @@
                                 </div>
                             </a>
 
+                            {# Desktop nav #}
                             <nav class="hidden items-center gap-2 md:flex">
                                 {% set route = app.request.attributes.get('_route') %}
 
@@ -68,53 +71,188 @@
                                     <span class="mx-1 h-5 w-px bg-white/10"></span>
                                 {% endif %}
 
-                                <a href="{{ path('app_blood_request_index') }}" class="
-                                        inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold
-                                        {{ route starts with 'app_blood_request_' ? 'bg-white/10 text-white ring-1 ring-white/15' : 'text-slate-200/90 hover:bg-white/5' }}
-                                    ">
-                                    <span aria-hidden="true">
-                                        🩸
-                                    </span>
-                                    Browse requests
-                                </a>
-
                                 {% if app.user %}
-                                    <a href="{{ path('app_blood_request_new') }}" class="
-                                            inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white
-                                            bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/25
-                                            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60
-                                        ">
-                                        <span aria-hidden="true">
-                                            ＋
-                                        </span>
-                                        Create request
-                                    </a>
+                                    <div class="relative group">
+                                        <a href="{{ path('app_blood_request_index') }}" class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition
+                                            {{ route starts with 'app_blood_request_' ? 'bg-white/10 text-white ring-1 ring-white/15' : 'text-slate-200/90 hover:bg-white/5' }}">
+                                            <span aria-hidden="true">
+                                                🩸
+                                            </span>
+                                            Requests
+                                            <svg class="h-4 w-4 opacity-70 transition group-hover:opacity-100 group-focus-within:opacity-100" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+
+                                        <div class="invisible group-hover:visible group-focus-within:visible absolute left-0 right-0 top-full h-3"></div>
+
+                                        <div class="invisible opacity-0 translate-y-1
+                                                group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
+                                                group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0
+                                                absolute left-0 top-full z-[80] mt-2 w-72 rounded-2xl bg-slate-950/90 backdrop-blur
+                                            ring-1 ring-white/12 shadow-xl shadow-black/30 transition duration-150">
+                                            <div class="p-2">
+                                                <a href="{{ path('app_blood_request_index') }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                    <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-white/7 ring-1 ring-white/10">
+                                                        🧭
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-semibold text-slate-100">
+                                                            Browse all requests
+                                                        </div>
+                                                        <div class="text-xs text-slate-400">
+                                                            See active requests
+                                                        </div>
+                                                    </div>
+                                                </a>
+
+                                                <a href="{{ path('app_blood_request_mine') }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                    <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-white/7 ring-1 ring-white/10">
+                                                        📌
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-semibold text-slate-100">
+                                                            My requests
+                                                        </div>
+                                                        <div class="text-xs text-slate-400">
+                                                            Track & edit your posts
+                                                        </div>
+                                                    </div>
+                                                </a>
+
+                                                <a href="{{ path('app_blood_request_mine') }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                    <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-white/7 ring-1 ring-white/10">
+                                                        🤝
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-semibold text-slate-100">
+                                                            My offers
+                                                        </div>
+                                                        <div class="text-xs text-slate-400">
+                                                            Track your help offers
+                                                        </div>
+                                                    </div>
+                                                </a>
+
+                                                <div class="my-2 h-px bg-white/10"></div>
+
+                                                <a href="{{ path('app_blood_request_new') }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                    <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-rose-600/20 ring-1 ring-rose-400/20 text-rose-100">
+                                                        ＋
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-semibold text-slate-100">
+                                                            Create a request
+                                                        </div>
+                                                        <div class="text-xs text-slate-400">
+                                                            Post a new urgent need
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% else %}
-                                    <a href="{{ path('app_login') }}" class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/5">
+                                    <a href="{{ path('app_blood_request_index') }}" class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold
+                                        {{ route starts with 'app_blood_request_' ? 'bg-white/10 text-white ring-1 ring-white/15' : 'text-slate-200/90 hover:bg-white/5' }}">
                                         <span aria-hidden="true">
-                                            ＋
+                                            🩸
                                         </span>
-                                        Create request
+                                        Requests
                                     </a>
                                 {% endif %}
 
-                                <div class="ml-2 flex items-center gap-2">
+                                <a href="{{ app.user ? path('app_blood_request_new') : path('app_login') }}" class="ml-1 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white
+                                        bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/25
+                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60">
+                                    <span aria-hidden="true">
+                                        ＋
+                                    </span>
+                                    Create request
+                                </a>
+
+                                <span class="mx-2 h-5 w-px bg-white/10"></span>
+
+                                <div class="flex items-center gap-2">
                                     {% if app.user %}
                                         {% set profile = app.user.userProfile ?? null %}
                                         {% set isProfileComplete = profile and (profile.fullName|default('')|trim) and (profile.city|default('')|trim) and (profile.phone|default('')|trim) %}
-                                        {% if isProfileComplete %}
-                                            {% set firstName = (profile.fullName|trim|split(' ')|first) %}
-                                            <span class="hidden lg:inline text-sm text-slate-300/80">
-                                                Hi,
-                                                <a href="{{ path('app_profile') }}" class="text-slate-100 font-semibold hover:underline underline-offset-4 decoration-white/20">
-                                                    {{ firstName }}
-                                                </a>
-                                            </span>
-                                        {% endif %}
+                                        {% set fullName = profile and (profile.fullName|default('')|trim) ? profile.fullName|trim : 'Account' %}
+                                        {% set initials = (fullName|trim|split(' ')|map(v => v|first)|join('')|upper)|slice(0,2) %}
 
-                                        <a href="{{ logout_path() }}" class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/5">
-                                            Logout
-                                        </a>
+                                        <div class="relative group">
+                                            <a href="{{ path('app_profile') }}" class="inline-flex items-center gap-3 rounded-2xl px-3 py-2 ring-1 ring-white/10 bg-white/5 hover:bg-white/7 transition">
+                                                <div class="grid h-9 w-9 place-items-center rounded-xl bg-white/10 ring-1 ring-white/12 text-sm font-bold text-slate-100">
+                                                    {{ initials }}
+                                                </div>
+
+                                                <div class="hidden lg:block leading-tight">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="text-sm font-semibold text-slate-100 max-w-[160px] truncate">
+                                                            {{ fullName }}
+                                                        </div>
+                                                        {% if not isProfileComplete %}
+                                                            <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-400/20">
+                                                                Complete
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-xs text-slate-400">
+                                                        Account
+                                                    </div>
+                                                </div>
+
+                                                <svg class="h-4 w-4 text-slate-300/70 transition group-hover:text-slate-200 group-focus-within:text-slate-200" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" />
+                                                </svg>
+                                            </a>
+
+                                            <div class="invisible group-hover:visible group-focus-within:visible absolute left-0 right-0 top-full h-3"></div>
+
+                                            <div class="invisible opacity-0 translate-y-1
+                                                    group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
+                                                    group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0
+                                                    absolute right-0 top-full z-[80] mt-2 w-72 rounded-2xl bg-slate-950/90 backdrop-blur
+                                                ring-1 ring-white/12 shadow-xl shadow-black/30 transition duration-150">
+                                                <div class="p-2">
+                                                    <a href="{{ path('app_profile') }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                        <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-white/7 ring-1 ring-white/10">
+                                                            👤
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-semibold text-slate-100">
+                                                                Profile
+                                                            </div>
+                                                            <div class="text-xs text-slate-400">
+                                                                View your details
+                                                            </div>
+                                                        </div>
+                                                    </a>
+
+                                                    {% if not isProfileComplete %}
+                                                        <div class="mt-2 rounded-xl bg-amber-500/10 ring-1 ring-amber-400/20 px-3 py-2 text-xs text-amber-100">
+                                                            Finish your profile to create requests faster.
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <div class="my-2 h-px bg-white/10"></div>
+
+                                                    <a href="{{ logout_path() }}" class="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/5">
+                                                        <div class="mt-0.5 grid h-9 w-9 place-items-center rounded-xl bg-rose-600/15 ring-1 ring-rose-400/20 text-rose-100">
+                                                            ⎋
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-sm font-semibold text-slate-100">
+                                                                Logout
+                                                            </div>
+                                                            <div class="text-xs text-slate-400">
+                                                                Sign out
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     {% else %}
                                         <a href="{{ path('app_login') }}" class="rounded-xl px-4 py-2 text-sm font-medium text-slate-100 hover:bg-white/5 ring-1 ring-white/10">
                                             Log in
@@ -126,12 +264,18 @@
                                 </div>
                             </nav>
 
+                            {# Mobile nav (cache-proof): render both blocks, then show via body[data-auth] #}
                             <div class="flex items-center gap-2 md:hidden">
                                 <a href="{{ path('app_blood_request_index') }}" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/5 ring-1 ring-white/10">
                                     Requests
                                 </a>
 
-                                {% if app.user %}
+                                {# Logged-in mobile buttons #}
+                                <div class="hidden [body[data-auth='1']_&]:flex items-center gap-2">
+                                    <a href="{{ path('app_blood_request_mine') }}" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/5 ring-1 ring-white/10">
+                                        My offers
+                                    </a>
+
                                     <a href="{{ path('app_blood_request_new') }}" class="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-500">
                                         New
                                     </a>
@@ -139,16 +283,18 @@
                                     <a href="{{ logout_path() }}" class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/5">
                                         Logout
                                     </a>
-                                {% else %}
+                                </div>
+
+                                {# Logged-out mobile buttons #}
+                                <div class="hidden [body[data-auth='0']_&]:flex items-center gap-2">
                                     <a href="{{ path('app_login') }}" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/5 ring-1 ring-white/10">
                                         Log in
                                     </a>
                                     <a href="{{ path('app_register') }}" class="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-500">
                                         Sign up
                                     </a>
-                                {% endif %}
+                                </div>
                             </div>
-
                         </div>
                     </header>
 
@@ -156,7 +302,7 @@
                         {% block body %}{% endblock %}
                     </main>
 
-                    {# Footer: same glass surface as header #}
+                    {# Footer #}
                     <footer class="border-t border-white/10 bg-slate-950/35 backdrop-blur">
                         <div class="mx-auto max-w-6xl px-6 py-8">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

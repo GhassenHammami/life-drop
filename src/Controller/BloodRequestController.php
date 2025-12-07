@@ -72,6 +72,9 @@ final class BloodRequestController extends AbstractController
     #[Route('/mine', name: 'app_blood_request_mine', methods: ['GET'])]
     public function mine(BloodRequestRepository $repo): Response
     {
+
+        $this->denyAccessUnlessGranted('ROLE_USER');
+
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
