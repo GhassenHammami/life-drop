@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProfileController extends AbstractController
 {
-    #[Route('/profile', name: 'app_profile')]
+    #[Route('/profile', name: 'app_profile', methods: ['GET'])]
     public function index(): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -28,7 +28,7 @@ final class ProfileController extends AbstractController
     }
 
 
-    #[Route('/profile/edit', name: 'app_profile_edit')]
+    #[Route('/profile/edit', name: 'app_profile_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
