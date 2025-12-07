@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\DonorProfile;
+use App\Entity\UserProfile;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<DonorProfile>
+ * @extends ServiceEntityRepository<UserProfile>
  */
-class DonorProfileRepository extends ServiceEntityRepository
+class UserProfileRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, DonorProfile::class);
+        parent::__construct($registry, UserProfile::class);
     }
 
     //    /**
-    //     * @return DonorProfile[] Returns an array of DonorProfile objects
+    //     * @return UserProfile[] Returns an array of UserProfile objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class DonorProfileRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?DonorProfile
+    //    public function findOneBySomeField($value): ?UserProfile
     //    {
     //        return $this->createQueryBuilder('d')
     //            ->andWhere('d.exampleField = :val')

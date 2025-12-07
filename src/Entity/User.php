@@ -36,7 +36,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
-    private ?DonorProfile $donorProfile = null;
+    private ?UserProfile $userProfile = null;
 
     /**
      * @var Collection<int, BloodRequest>
@@ -131,19 +131,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $data;
     }
 
-    public function getDonorProfile(): ?DonorProfile
+    public function getUserProfile(): ?UserProfile
     {
-        return $this->donorProfile;
+        return $this->userProfile;
     }
 
-    public function setDonorProfile(DonorProfile $donorProfile): static
+    public function setUserProfile(UserProfile $userProfile): static
     {
         // set the owning side of the relation if necessary
-        if ($donorProfile->getUser() !== $this) {
-            $donorProfile->setUser($this);
+        if ($userProfile->getUser() !== $this) {
+            $userProfile->setUser($this);
         }
 
-        $this->donorProfile = $donorProfile;
+        $this->userProfile = $userProfile;
 
         return $this;
     }

@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
-use App\Repository\DonorProfileRepository;
+use App\Repository\UserProfileRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: DonorProfileRepository::class)]
-class DonorProfile
+#[ORM\Entity(repositoryClass: UserProfileRepository::class)]
+class UserProfile
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -35,7 +35,7 @@ class DonorProfile
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\OneToOne(inversedBy: 'donorProfile', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'userProfile', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
