@@ -25,6 +25,7 @@
 - [Project Description](#project-description)
 - [Tech Stack](#tech-stack)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
