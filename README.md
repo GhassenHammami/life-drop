@@ -52,7 +52,7 @@ LifeDrop helps people publish urgent blood donation requests and enables nearby 
 - PHP 8.1+
 - Symfony 6.x
 - Doctrine ORM
-- Twig (server-rendered UI) or API controllers (if present)
+- Twig (server-rendered UI)
 - Composer for dependency management
 
 ## Features
@@ -178,7 +178,7 @@ LifeDrop helps people publish urgent blood donation requests and enables nearby 
   symfony server:start
   ```
 
-- Or using PHP built-in server (if the project serves from public/)
+- Or using PHP built-in server
   ```bash
   php -S 127.0.0.1:8000 -t public
   ```
@@ -211,7 +211,7 @@ This project is licensed under the [MIT License](LICENSE.md) — see the LICENSE
 1. Fork the repository.
 2. Create a feature branch: git checkout -b feature/awesome
 3. Install dependencies and run migrations locally.
-4. Run tests and linters (if present).
+4. Run tests.
 5. Open a Pull Request describing your changes.
 
 ## Acknowledgments
