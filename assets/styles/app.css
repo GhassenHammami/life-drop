@@ -5,3 +5,17 @@
 body {
     background-color: lightgray;
 }
+
+@layer base {
+    select,
+    option {
+        color: rgb(226 232 240);
+        background-color: rgb(2 6 23);
+    }
+
+    input,
+    textarea,
+    select {
+        color-scheme: dark;
+    }
+}

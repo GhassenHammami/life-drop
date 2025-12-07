@@ -67,12 +67,19 @@
 
                                 <div class="ml-2 flex items-center gap-2">
                                     {% if app.user %}
-                                        <span class="hidden lg:inline text-sm text-slate-300/80">
-                                            Hi,
-                                            <span class="text-slate-100 font-semibold">
-                                                {{ app.user.userIdentifier }}
+                                        {% set profile = app.user.userProfile ?? null %}
+                                        {% set isProfileComplete = profile and (profile.fullName|default('')|trim) and (profile.city|default('')|trim) and (profile.phone|default('')|trim) %}
+                                        {% if isProfileComplete %}
+                                            {% set firstName = (profile.fullName|trim|split(' ')|first) %}
+
+                                            <span class="hidden lg:inline text-sm text-slate-300/80">
+                                                Hi,
+                                                <a href="{{ path('app_profile') }}" class="text-slate-100 font-semibold hover:underline underline-offset-4 decoration-white/20">
+                                                    {{ firstName }}
+                                                </a>
                                             </span>
-                                        </span>
+                                        {% endif %}
+
                                         <a href="{{ logout_path() }}" class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/5">
                                             Logout
                                         </a>

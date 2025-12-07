@@ -1,0 +1,213 @@
+{# templates/profile/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}My profile — LifeDrop{% endblock %}
+
+{% block body %}
+{# Detect first-time setup: no profile yet (controller passes "profile") or required fields missing #}
+{% set isFirstTime = (profile is not defined) or (profile is empty) or (profile.fullName is empty) or (profile.city is empty) or (profile.phone is empty) %}
+
+<div class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+  {# Header (top) #}
+  <div class="mx-auto max-w-4xl">
+    <h1 class="text-4xl font-bold tracking-tight">
+      {{ isFirstTime ? 'Set up your profile' : 'My profile' }}
+    </h1>
+    <p class="mt-3 text-slate-300/90">
+      {{ isFirstTime
+        ? 'Before you can browse LifeDrop, please complete your profile. This helps people contact you safely.'
+        : 'Update your details so people can reach you when it matters. Donation info is optional.'
+      }}
+    </p>
+
+    {% if isFirstTime %}
+      <div class="mt-5 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100 ring-1 ring-rose-400/10">
+        <div class="font-semibold">Profile required</div>
+        <div class="mt-1 text-rose-100/90">
+          Fill in your name, phone, and city to unlock the website. You can add donation info later.
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="mx-auto mt-8 max-w-4xl">
+    <div class="rounded-3xl bg-linear-to-b from-white/10 to-white/5 p-1 ring-1 ring-white/10">
+      <div class="rounded-3xl bg-slate-950/60 p-6 backdrop-blur md:p-8">
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight">
+              {{ isFirstTime ? 'Initial setup' : 'Edit profile' }}
+            </h2>
+            <p class="mt-1 text-sm text-slate-300/90">
+              {{ isFirstTime ? 'This takes less than a minute.' : 'You can change this anytime.' }}
+            </p>
+          </div>
+
+          {# Only show "Back to home" once profile is complete (since you may be blocking navigation) #}
+          {% if not isFirstTime %}
+            <a href="{{ path('app_home') }}"
+               class="inline-flex w-fit items-center justify-center rounded-2xl bg-white/5 px-4 py-2 text-xs font-semibold text-slate-100 ring-1 ring-white/10 hover:bg-white/10">
+              Back to home
+            </a>
+          {% endif %}
+        </div>
+
+        {% for message in app.flashes('success') %}
+          <div class="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+            {{ message }}
+          </div>
+        {% endfor %}
+
+        {% if form_errors(form) %}
+          <div class="mt-5 rounded-2xl border border-rose-500/25 bg-rose-600/10 p-4 text-sm text-rose-100">
+            {{ form_errors(form) }}
+          </div>
+        {% endif %}
+
+        {{ form_start(form, { attr: { class: 'mt-6 space-y-6' } }) }}
+
+          {# --- Basic info (2 columns on desktop) --- #}
+          <div>
+            <div class="flex items-end justify-between gap-4">
+              <div>
+                <div class="text-sm font-semibold text-slate-100">
+                  {{ isFirstTime ? 'Required information' : 'Basic information' }}
+                </div>
+                <div class="mt-1 text-xs text-slate-400">
+                  {{ isFirstTime ? 'Please fill these to continue.' : 'Name, phone, and city.' }}
+                </div>
+              </div>
+
+              {% if isFirstTime %}
+                <div class="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-200 ring-1 ring-white/10">
+                  <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                  Unlock access after save
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mt-4 grid gap-5 md:grid-cols-2">
+              {# Full name #}
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                  {{ form_label(form.fullName) }}
+                </label>
+                {{ form_widget(form.fullName, {
+                  attr: {
+                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60',
+                    placeholder: 'Your name'
+                  }
+                }) }}
+                <div class="mt-2 text-xs text-rose-200/90">{{ form_errors(form.fullName) }}</div>
+              </div>
+
+              {# Phone #}
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                  {{ form_label(form.phone) }}
+                </label>
+                {{ form_widget(form.phone, {
+                  attr: {
+                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-400/70 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60',
+                    placeholder: '+216 .. .. .. ..'
+                  }
+                }) }}
+                <div class="mt-2 text-xs text-rose-200/90">{{ form_errors(form.phone) }}</div>
+              </div>
+
+              {# City (dropdown or text) #}
+              <div class="md:col-span-2">
+                <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                  {{ form_label(form.city) }}
+                </label>
+                {{ form_widget(form.city, {
+                  attr: {
+                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                  }
+                }) }}
+                <div class="mt-2 text-xs text-rose-200/90">{{ form_errors(form.city) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="h-px bg-white/10"></div>
+
+          {# --- Donation info (3 columns on desktop) --- #}
+          <div>
+            <div class="text-sm font-semibold text-slate-100">Donation info (optional)</div>
+            <div class="mt-1 text-xs text-slate-400">Only fill this if you want to offer donations.</div>
+
+            <div class="mt-4 grid gap-5 md:grid-cols-3">
+              {# Blood type #}
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                  {{ form_label(form.bloodType) }}
+                </label>
+                {{ form_widget(form.bloodType, {
+                  attr: {
+                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                  }
+                }) }}
+                <div class="mt-2 text-xs text-rose-200/90">{{ form_errors(form.bloodType) }}</div>
+              </div>
+
+              {# Last donation date #}
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate-200/90">
+                  {{ form_label(form.lastDonationDate) }}
+                </label>
+                {{ form_widget(form.lastDonationDate, {
+                  attr: {
+                    class: 'w-full rounded-2xl bg-white/5 px-4 py-3 min-h-12 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60'
+                  }
+                }) }}
+                <div class="mt-2 text-xs text-rose-200/90">{{ form_errors(form.lastDonationDate) }}</div>
+              </div>
+
+              {# Available #}
+              <div class="md:pt-7">
+                <div class="rounded-2xl bg-white/5 px-4 py-3 min-h-12 ring-1 ring-white/10">
+                  <div class="flex items-start gap-3">
+                    {{ form_widget(form.available, {
+                      attr: {
+                        class: 'mt-1 h-4 w-4 rounded border-white/20 bg-white/10 text-rose-500 ring-1 ring-white/10 focus:ring-0 focus:outline-none'
+                      }
+                    }) }}
+                    <div class="text-sm text-slate-200/90">
+                      <label class="cursor-pointer select-none">
+                        {{ form_label(form.available) }}
+                      </label>
+                      <div class="mt-1 text-xs text-rose-200/90">{{ form_errors(form.available) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button
+              type="submit"
+              class="w-full cursor-pointer rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white
+                     hover:bg-rose-500 shadow-lg shadow-rose-600/25 active:scale-[0.99]
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60"
+            >
+              {{ isFirstTime ? 'Save and continue' : 'Save profile' }}
+            </button>
+
+            {% if isFirstTime %}
+              <div class="mt-3 text-center text-xs text-slate-400">
+                After saving, you’ll be able to browse the website.
+              </div>
+            {% endif %}
+          </div>
+
+        {{ form_end(form) }}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -20,7 +20,7 @@ class UserProfile
     #[ORM\Column(length: 30)]
     private ?string $phone = null;
 
-    #[ORM\Column(length: 3)]
+    #[ORM\Column(length: 3, nullable: true)]
     private ?string $bloodType = null;
 
     #[ORM\Column(length: 80)]
@@ -30,14 +30,20 @@ class UserProfile
     private ?\DateTimeImmutable $lastDonationDate = null;
 
     #[ORM\Column]
-    private ?bool $available = null;
+    private bool $available = true;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
     #[ORM\OneToOne(inversedBy: 'userProfile', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->available = true;
+    }
 
     public function getId(): ?int
     {
@@ -49,7 +55,7 @@ class UserProfile
         return $this->fullName;
     }
 
-    public function setFullName(string $fullName): static
+    public function setFullName(?string $fullName): static
     {
         $this->fullName = $fullName;
 
@@ -61,7 +67,7 @@ class UserProfile
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
 
@@ -73,7 +79,7 @@ class UserProfile
         return $this->bloodType;
     }
 
-    public function setBloodType(string $bloodType): static
+    public function setBloodType(?string $bloodType): static
     {
         $this->bloodType = $bloodType;
 
@@ -85,7 +91,7 @@ class UserProfile
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
@@ -104,7 +110,7 @@ class UserProfile
         return $this;
     }
 
-    public function isAvailable(): ?bool
+    public function isAvailable(): bool
     {
         return $this->available;
     }
@@ -116,16 +122,9 @@ class UserProfile
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
     }
 
     public function getUser(): ?User
